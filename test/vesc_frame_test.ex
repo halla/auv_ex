@@ -18,4 +18,13 @@ defmodule VescFrameTest do
     assert msg.data == data_expected
   end
 
+  test "framing of given short msg" do
+    {:ok, framer} = VescFrame.init([])
+    data = << 4, 1, 71, 252, 183, 0, 0, 0, 33, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 34, 0, 49, 0, 0, 19, 86, 0, 242, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 57, 0, 0, 0, 0, 0, 0, 122, 111, 0, 0, 124, 43, 0, 7, 153, 116, 160, 6, 0, 0, 0, 0, 0, 0>>
+    data_framed = <<2,65,4, 1, 71, 252, 183, 0, 0, 0, 33, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 34, 0, 49, 0, 0, 19, 86, 0, 242, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 57, 0, 0, 0, 0, 0, 0, 122, 111, 0, 0, 124, 43, 0, 7, 153, 116, 160, 6, 0, 0, 0, 0, 0, 0, 75, 172,3>>
+    {:ok, framed, <<>>} = VescFrame.add_framing(data, framer)
+    assert framed == data_framed
+
+  end
+
 end

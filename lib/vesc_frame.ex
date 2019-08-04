@@ -2,19 +2,25 @@ defmodule VescFrame do
   @behaviour Circuits.UART.Framing
 
   @moduledoc """
-  Each message is 4 bytes. This framer doesn't do anything for the transmit
-  direction, but for receives, it will collect bytes in batches of 4 before
-  sending them up. The user can set up a framer timeout if they don't mind
-  partial frames. This can be useful to resyncronize when bytes are dropped.
+
   """
 
   def init(_args) do
     {:ok, <<>>}
   end
 
+  # or tx_buffer?
   def add_framing(data, rx_buffer) when is_binary(data) do
     # No processing - assume the app knows to send the right number of bytes
-    {:ok, data, rx_buffer}
+    # data length
+    length = byte_size(data)
+    start = if length < 256 do 2 else 3 end
+    crc = CRC.crc(:crc_16_xmodem, data)
+    framed = <<start, length>> <> data <> <<crc::16, 3>>
+    IO.puts(inspect framed, limit: :infinity)
+    # decide short/long
+    # start byte, length byte(s), data, crc, ed
+    {:ok, framed, rx_buffer}
   end
 
   def frame_timeout(rx_buffer) do

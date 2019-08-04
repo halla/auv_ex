@@ -2,29 +2,6 @@ defmodule AuvEx do
   @moduledoc """
   Documentation for AuvEx.
 
-
-
-
-
-    double v_in() const;
-  double temp_mos1() const;
-  double temp_mos2() const;
-  double temp_mos3() const;
-  double temp_mos4() const;
-  double temp_mos5() const;
-  double temp_mos6() const;
-  double temp_pcb() const;
-  double current_motor() const;
-  double current_in() const;
-  double rpm() const;
-  double duty_now() const;
-  double amp_hours() const;
-  double amp_hours_charged() const;
-  double watt_hours() const;
-  double watt_hours_charged() const;
-  double tachometer() const;
-  double tachometer_abs() const;
-  int fault_code() const;
   """
 
   use GenServer
@@ -85,7 +62,7 @@ defmodule AuvEx do
 
   def handle_info(:work, state) do
     if state.running do
-    #  set_duty(state.uart_pid, state.duty)
+      set_duty(state.uart_pid, state.duty)
       get_data(state.uart_pid)
       {:ok, response}= Circuits.UART.read(state.uart_pid, 1000)
       IO.puts(inspect response)
@@ -117,10 +94,6 @@ defmodule AuvEx do
   # <2|3, len1, (len2), ... payload ..., crc1, crc2 ,3>
   # set_duty = 0
 
-@frame_short 2
-@frame_end <<3>>
-
-
   def start() do
     {:ok, pid} = Circuits.UART.start_link
     {:ok, pid}
@@ -131,13 +104,7 @@ defmodule AuvEx do
   end
 
   def get_data(pid) do
-    frame_start = <<@frame_short, 1>>
-    payload = <<4>>
-    crc = CRC.crc(:crc_16_xmodem, payload)
-    <<crc1::8, crc2::8>> = <<crc::16>>
-    packet = frame_start <> payload <> <<crc1, crc2>> <> @frame_end
-    a = Circuits.UART.write(pid, packet)
-
+    a = Circuits.UART.write(pid, <<4>>)
   end
 
 # void* VescInterface::Impl::rxThread(void)
@@ -147,16 +114,9 @@ defmodule AuvEx do
   end
 
   def set_duty(pid, duty) do
-    frame_start = <<2, 5>>
-    frame_end = <<3>>
-    command = <<5>>
-    <<_v0::32, v1, v2, v3, v4>> = <<trunc(100000*duty)::64>>
-    payload = command <> <<v1,v2,v3,v4>>
-    crc = CRC.crc(:crc_16_xmodem, payload)
-    <<crc1::8, crc2::8>> = <<crc::16>>
-
-    packet = frame_start <> payload <> <<crc1, crc2>> <> frame_end
-    a = Circuits.UART.write(pid, packet)
+    <<_v0::32, val::32>> = <<trunc(100000*duty)::64>>
+    payload = <<5, val::32>>
+    a = Circuits.UART.write(pid, payload)
   end
 
   def set_duty(pid, duty, 0) do
