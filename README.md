@@ -1,6 +1,8 @@
 # AuvEx
 
-**TODO: Add description**
+Communicating with a motor controller through UART in Elixir.
+
+Prototype code, never finished. But an example of implementing a binary protocol in Elixir with pattern matching.
 
 ## Installation
 
